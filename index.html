@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Math Detective</title>
+<style>
+:root{--ink:#17324d;--blue:#2878ff;--green:#24b47e;--red:#ef476f;--shadow:0 10px 28px #16324a20}
+*{box-sizing:border-box} html,body{min-height:100%;overscroll-behavior-y:auto}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(160deg,#dff3ff,#fff4df);color:var(--ink)}
+.version{position:fixed;right:10px;top:10px;z-index:50;background:#17324d;color:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900}
+.screen{display:none;min-height:100vh;padding:48px 14px 22px}.screen.active{display:flex;flex-direction:column;align-items:center}
+.panel{width:min(720px,100%);background:#fff;border-radius:24px;padding:22px;box-shadow:var(--shadow)}
+h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h2{text-align:center}.sub{text-align:center;opacity:.75}
+.btn,button,select,input{font:inherit}.btn,button{border:0;border-radius:16px;padding:14px 18px;font-weight:900;cursor:pointer}.primary{background:var(--blue);color:#fff}.secondary{background:#e9f1ff;color:#19436d}.wide{width:100%;margin-top:10px}
+.field{margin:13px 0}.field label{display:block;font-weight:900;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:2px solid #d9e6f2;border-radius:12px;background:#fff;font-size:16px}
+.topbar{width:min(760px,100%);display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px}.pill{background:#fff;padding:10px 13px;border-radius:16px;box-shadow:var(--shadow);font-weight:900}.timer{text-align:center;font-size:22px}.score{text-align:right}
+.gamebox{width:min(760px,100%);background:#dfe7f3;border-radius:30px;padding:24px 16px;min-height:510px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.equation{font-size:clamp(38px,11vw,70px);font-weight:800;color:#111;text-align:center;margin:12px 0 52px;white-space:nowrap}
+.ops{display:grid;grid-template-columns:repeat(2,minmax(100px,145px));gap:22px 34px}.op{height:128px;background:#fff;border-radius:18px;box-shadow:0 6px 12px #0002;font-size:64px;color:#000;display:flex;align-items:center;justify-content:center}.op:active{transform:scale(.95)}
+.feedback{height:38px;margin:12px 0 4px;font-size:24px;font-weight:1000;text-align:center}.hint{text-align:center;font-weight:800;margin-bottom:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}.actions .btn{padding:10px 12px}
+.good{color:#168b56}.bad{color:#d82445}.hidden{display:none!important}
+.scoreboard{width:100%;border-collapse:collapse}.scoreboard th,.scoreboard td{padding:10px;border-bottom:1px solid #dce7ef;text-align:center}.winner{text-align:center;font-size:27px;font-weight:1000;margin:14px}
+.tutEq{font-size:36px;text-align:center;font-weight:900;margin:18px}.tutOps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:330px;margin:auto}.tutOps div{background:#f2f6fb;border-radius:14px;padding:14px;text-align:center;font-size:30px;font-weight:900}.callout{background:#eef7ff;border-radius:16px;padding:12px;margin:12px 0;font-weight:750}
+@media(max-height:700px){.screen{padding-top:40px}.gamebox{min-height:430px;padding:12px}.equation{margin-bottom:28px}.op{height:100px}.ops{gap:14px 26px}}
+</style>
+</head>
+<body>
+<div class="version">Version 1</div>
+
+<section id="home" class="screen active"><div class="panel">
+<h1>🧮 Math Detective</h1><p class="sub">Think. Choose. Speak.</p>
+<button class="btn primary wide" onclick="chooseMode('local')">📱 Local Game</button>
+<p class="sub" style="margin-top:20px">Designed &amp; Created by Sadegh Mosleh · © 2026</p>
+</div></section>
+
+<section id="setup" class="screen"><div class="panel">
+<h2>Game Setup</h2>
+<div class="field"><label>Number of Players</label><select id="playerCount"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
+<div id="names"></div>
+<div class="field"><label>Difficulty Level</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
+<div class="field"><label>Game Time</label><select id="duration"><option value="30" selected>30 seconds</option><option value="60">60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option></select></div>
+<button class="btn primary wide" onclick="startConfiguredGame()">Start Game</button><button class="btn secondary wide" onclick="show('home')">Back</button>
+</div></section>
+
+<section id="transition" class="screen"><div class="panel"><h1 id="turnTitle">Ready?</h1><p class="sub">Your timer begins when you press Start.</p><button class="btn primary wide" onclick="beginPlayer()">▶ Start</button></div></section>
+
+<section id="game" class="screen">
+<div class="topbar"><div class="pill" id="who">Player</div><div class="pill timer">⏱ <span id="time">30</span></div><div class="pill score">⭐ <span id="score">0</span></div></div>
+<div class="gamebox">
+<div class="hint">Tap an operator or say its name.</div><div id="feedback" class="feedback"></div>
+<div id="equation" class="equation"></div>
+<div class="ops">
+<button class="op" onclick="answer('+')">+</button><button class="op" onclick="answer('-')">−</button>
+<button class="op" onclick="answer('*')">×</button><button class="op" onclick="answer('/')">÷</button>
+</div></div>
+<div class="actions"><button class="btn secondary" onclick="returnHome()">⌂ Main Menu</button><button class="btn secondary" onclick="openTutorial()">📘 Tutorial</button><button class="btn secondary" onclick="restartSame()">↻ Restart</button></div>
+</section>
+
+<section id="results" class="screen"><div class="panel"><h1>🏆 Results</h1><div id="winner" class="winner"></div><table class="scoreboard"><thead><tr><th>Player</th><th>Score</th><th>Questions</th><th>Correct</th><th>Wrong</th></tr></thead><tbody id="resultRows"></tbody></table><button class="btn primary wide" onclick="playAgain()">↻ Play Again</button><button class="btn secondary wide" onclick="returnHome()">⌂ Main Menu</button></div></section>
+
+<section id="tutorial" class="screen"><div class="panel">
+<h1>📘 Tutorial</h1><h2>How to Play</h2>
+<p class="sub">Find the missing mathematical operation.</p>
+<div class="tutEq">−8 □ −6 = −2</div><div class="tutOps"><div>+</div><div style="outline:4px solid #24b47e">− ✓</div><div>×</div><div>÷</div></div>
+<div class="callout">You can <b>touch</b> the correct operator or <b>say its name</b>. For this example, tap − or say “minus”.</div>
+<p>Voice also understands common alternatives such as <b>add/addition</b>, <b>subtract/subtraction</b>, <b>times/multiply</b>, and <b>divide/division</b>.</p>
+<button class="btn secondary wide" onclick="closeTutorial()">← Back to Game</button>
+</div></section>
+
+<script>
+let players=[],pi=0,score=0,questions=0,correct=0,wrong=0,settings={},current=null,endAt=0,timer=null,locked=false;
+let tutorialPausedAt=0,recognition=null,wantListening=false;
+function $(id){return document.getElementById(id)}
+function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')}
+function chooseMode(){show('setup');renderNames()}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function renderNames(){let n=+$('playerCount').value,saved=[];try{saved=JSON.parse(localStorage.getItem('mathDetectivePlayerNames')||'[]')}catch(e){}let old=[...document.querySelectorAll('.pname')].map(x=>x.value);$('names').innerHTML=Array.from({length:n},(_,i)=>`<div class="field"><label>Player ${i+1}</label><input class="pname" value="${esc(old[i]||saved[i]||`Player ${i+1}`)}"></div>`).join('')}
+$('playerCount').onchange=renderNames;
+function startConfiguredGame(){settings={difficulty:$('difficulty').value,duration:+$('duration').value};players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('mathDetectivePlayerNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}pi=0;showTransition()}
+function showTransition(){$('turnTitle').textContent=`${players[pi].name}, get ready!`;show('transition')}
+function beginPlayer(){score=questions=correct=wrong=0;$('who').textContent=players[pi].name;$('score').textContent=0;show('game');endAt=performance.now()+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);newQuestion();startListening()}
+function tick(){let left=Math.max(0,Math.ceil((endAt-performance.now())/1000));$('time').textContent=left;if(performance.now()>=endAt)finishPlayer()}
+function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function calc(a,op,b){return op==='+'?a+b:op==='-'?a-b:op==='*'?a*b:a/b}
+function unique(a,b,result,correctOp){return ['+','-','*','/'].filter(op=>b!==0&&Math.abs(calc(a,op,b)-result)<1e-9).length===1}
+function generate(){
+ const ops=['+','-','*','/']; let level=settings.difficulty;
+ for(let tries=0;tries<500;tries++){
+   let op=ops[ri(0,3)],a,b,r;
+   if(level==='easy'){
+     if(op==='/'){b=ri(1,10);r=ri(1,10);a=b*r}else{a=ri(0,20);b=ri(0,20);if(op==='-'&&b>a)[a,b]=[b,a];r=calc(a,op,b)}
+   }else if(level==='medium'){
+     if(op==='/'){b=ri(1,12)*(Math.random()<.25?-1:1);r=ri(-10,15);if(r===0)r=ri(1,10);a=b*r}else{a=ri(-30,50);b=ri(-20,30);r=calc(a,op,b)}
+   }else{
+     if(op==='/'){b=ri(2,15)*(Math.random()<.5?-1:1);r=ri(-15,20);if(r===0)r=ri(2,12);a=b*r}else if(op==='*'){a=ri(-15,20);b=ri(-12,15);r=a*b}else{a=ri(-100,120);b=ri(-80,100);r=calc(a,op,b)}
+   }
+   if(b!==0&&Number.isInteger(r)&&unique(a,b,r,op))return {a,b,r,op}
+ }
+ return {a:8,b:3,r:11,op:'+'}
+}
+function fmt(n){return n<0?`(${n})`:String(n)}
+function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`}
+function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;if(op===current.op){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1';speak('Correct')}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`;speak('Wrong')}$('score').textContent=score;setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}
+function symbol(op){return op==='*'?'×':op==='/'?'÷':op}
+function speak(t){if(!('speechSynthesis'in window))return;let was=wantListening;stopListening();let u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.9;u.onend=()=>{if(was&&$('game').classList.contains('active'))startListening()};speechSynthesis.cancel();speechSynthesis.speak(u)}
+const voiceMap={'+':['plus','add','addition','added'],'-':['minus','subtract','subtraction','take away'],'*':['times','multiply','multiplied','multiplication','cross'],'/':['divide','divided','division','over']};
+function detectVoice(t){t=t.toLowerCase().replace(/[^a-z ]/g,' ');for(const [op,words] of Object.entries(voiceMap))if(words.some(w=>t.includes(w)))return op;return null}
+function startListening(){wantListening=true;if(recognition)return;let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;let r=new SR();recognition=r;r.lang='en-US';r.continuous=false;r.interimResults=false;r.maxAlternatives=5;r.onresult=e=>{let heard=[...e.results[0]].map(x=>x.transcript);recognition=null;let op=heard.map(detectVoice).find(Boolean);if(op)answer(op);if(wantListening&&!locked)setTimeout(startListening,180)};r.onerror=()=>{};r.onend=()=>{if(recognition===r)recognition=null;if(wantListening&&!locked&&$('game').classList.contains('active'))setTimeout(startListening,220)};try{r.start()}catch(e){recognition=null}}
+function stopListening(){wantListening=false;if(recognition){try{recognition.abort()}catch(e){}recognition=null}}
+function openTutorial(){tutorialPausedAt=performance.now();clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();show('tutorial')}
+function closeTutorial(){let paused=performance.now()-tutorialPausedAt;endAt+=paused;show('game');timer=setInterval(tick,100);startListening()}
+function restartSame(){clearInterval(timer);stopListening();beginPlayer()}
+function finishPlayer(){if(!timer)return;clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();players[pi]={...players[pi],score,questions,correct,wrong};pi++;if(pi<players.length)showTransition();else showResults()}
+function showResults(){let sorted=[...players].sort((a,b)=>b.score-a.score);let best=sorted[0]?.score,w=sorted.filter(x=>x.score===best);$('winner').textContent=w.length===1?`🎉 ${w[0].name} wins!`:`🤝 Tie: ${w.map(x=>x.name).join(' & ')}`;$('resultRows').innerHTML=sorted.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.score}</td><td>${x.questions}</td><td>${x.correct}</td><td>${x.wrong}</td></tr>`).join('');show('results')}
+function playAgain(){pi=0;showTransition()}
+function returnHome(){clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();show('home')}
+renderNames();
+</script>
+</body></html>
