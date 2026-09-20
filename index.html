@@ -18,7 +18,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 .topbar{width:min(760px,100%);display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px}.pill{background:#fff;padding:10px 13px;border-radius:16px;box-shadow:var(--shadow);font-weight:900}.timer{text-align:center;font-size:22px}.score{text-align:right}
 .gamebox{width:min(760px,100%);background:#dfe7f3;border-radius:30px;padding:24px 16px;min-height:510px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .equation{font-size:clamp(38px,11vw,70px);font-weight:800;color:#111;text-align:center;margin:12px 0 52px;white-space:nowrap}
-.ops{display:grid;grid-template-columns:repeat(2,minmax(100px,145px));gap:22px 34px}.op{height:128px;background:#fff;border-radius:18px;box-shadow:0 6px 12px #0002;font-size:64px;color:#000;display:flex;align-items:center;justify-content:center}.op:active{transform:scale(.95)}
+.ops{display:grid;grid-template-columns:repeat(2,minmax(100px,145px));gap:22px 34px}.op{height:128px;background:#fff;border-radius:18px;box-shadow:0 6px 12px #0002;font-size:64px;color:#000;display:flex;align-items:center;justify-content:center}.op:active{transform:scale(.95)}.ops.guideOnly .op{pointer-events:none;cursor:default}.ops.guideOnly .op:active{transform:none}
 .feedback{min-height:38px;margin:12px 0 4px;font-size:24px;font-weight:1000;text-align:center}.listeningBox{display:inline-block;background:#dff7e8;color:#08783f;border:2px solid #35b76f;border-radius:12px;padding:7px 18px;box-shadow:0 2px 6px #0001}.hint{text-align:center;font-weight:800;margin-bottom:10px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}.actions .btn{padding:10px 12px}
 .good{color:#168b56}.bad{color:#d82445}.hidden{display:none!important}
@@ -48,7 +48,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <button class="btn secondary wide" onclick="joinRoom()">Join Room</button>
 <div id="roomInfo" class="sub"></div>
 </div>
-<div class="field"><label>Game Mode</label><select id="gameMode"><option value="race" selected>🏁 Race Mode</option><option value="practice">🎓 Practice Mode</option></select></div><div class="field"><label>Difficulty Level</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
+<div class="field"><label>Difficulty Level</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
 <div class="field"><label>Game Time</label><select id="duration"><option value="30" selected>30 seconds</option><option value="60">60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option></select></div>
 <button id="startBtn" class="btn primary wide" onclick="startConfiguredGame()">Start Game</button><button class="btn secondary wide" onclick="show('home')">Back</button>
 </div></section>
@@ -58,13 +58,14 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <section id="game" class="screen">
 <div class="topbar"><div class="pill" id="who">Player</div><div class="pill timer">⏱ <span id="time">30</span></div><div class="pill score">⭐ <span id="score">0</span></div></div>
 <div class="gamebox">
-<div class="hint">Tap an operator or say its name.</div><div id="feedback" class="feedback"></div>
+<div class="hint" id="gameHint">Tap an operator or say its name.</div><div id="feedback" class="feedback"></div>
 <div id="equation" class="equation"></div>
 <div class="ops">
 <button class="op" onclick="answer('+')">+</button><button class="op" onclick="answer('-')">−</button>
 <button class="op" onclick="answer('*')">×</button><button class="op" onclick="answer('/')">÷</button>
 </div>
-<button class="btn secondary" style="margin-top:24px;min-width:150px" onclick="skipQuestion()">⏭ Skip</button>
+<button id="equationVoiceBtn" class="btn" style="display:none;margin-top:24px;min-width:210px;background:#d9363e;color:white" onclick="toggleEquationVoice()">🎤 Voice: OFF</button>
+<button id="skipBtn" class="btn secondary" style="margin-top:24px;min-width:150px" onclick="skipQuestion()">⏭ Skip</button>
 </div>
 <div class="actions"><button class="btn secondary" onclick="returnHome()">⌂ Main Menu</button><button class="btn secondary" onclick="openTutorial()">📘 Tutorial</button><button class="btn secondary" onclick="restartSame()">↻ Restart</button></div>
 </section>
@@ -78,7 +79,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <p class="sub">Find the missing mathematical operation.</p>
 <div class="tutEq">−8 □ −6 = −2</div>
 <div class="tutOps"><div>+</div><div id="tutorialMinus" style="outline:4px solid #24b47e">− ✓</div><div>×</div><div>÷</div></div>
-<div class="callout">You can <b>touch</b> the correct operator or <b>say its name</b>. Here the correct operator is <b>minus</b>.<br><br>If you do not know the answer, tap <b>Skip</b> to move to the next question with <b>no points lost</b>.<br><br><b>🏁 Race Mode:</b> fast gameplay with short feedback.<br><b>🎓 Practice Mode:</b> the game asks a varied spoken question before each equation. After the answer, it gives varied spoken feedback and reads the complete correct equation aloud.</div>
+<div class="callout">You can <b>touch</b> the correct operator or <b>say its name</b>. Here the correct operator is <b>minus</b>.<br><br>If you do not know the answer, tap <b>Skip</b> to move to the next question with <b>no points lost</b>.</div>
 <div class="tutNav"><button class="btn secondary" onclick="closeTutorial()">← Back to Game</button><button class="btn primary" onclick="tutorialPage(2)">Next →</button></div>
 </div>
 <div id="tut2" class="hidden">
@@ -97,16 +98,16 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <script>
 let mode='local',players=[],pi=0,score=0,questions=0,correct=0,wrong=0,settings={},current=null,endAt=0,timer=null,locked=false;
 let seed=1,peer=null,conns=[],hostConn=null,isHost=false,roomPlayers=[],onlineFinished={},onlineTotal=1;
-let tutorialPausedAt=0,recognition=null,wantListening=false;
+let tutorialPausedAt=0,recognition=null,wantListening=false,equationVoiceActive=false,equationVoiceTranscript='',equationVoiceCandidates=[];
 function $(id){return document.getElementById(id)}
 function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')}
 function chooseMode(m){mode=m;show('setup');$('setupTitle').textContent=m==='local'?'📱 Local Game':'🌐 Online Game';$('localFields').classList.toggle('hidden',m!=='local');$('onlineFields').classList.toggle('hidden',m!=='online');$('startBtn').classList.toggle('hidden',m==='online');renderNames()}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function renderNames(){let n=+$('playerCount').value,saved=[];try{saved=JSON.parse(localStorage.getItem('mathDetectivePlayerNames')||'[]')}catch(e){}let old=[...document.querySelectorAll('.pname')].map(x=>x.value);$('names').innerHTML=Array.from({length:n},(_,i)=>`<div class="field"><label>Player ${i+1}</label><input class="pname" value="${esc(old[i]||saved[i]||`Player ${i+1}`)}"></div>`).join('')}
 $('playerCount').onchange=renderNames;
-function startConfiguredGame(){settings={gameMode:$('gameMode').value,difficulty:$('difficulty').value,duration:+$('duration').value};players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('mathDetectivePlayerNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}pi=0;seed=(Date.now()>>>0);settings.baseSeed=seed;showTransition()}
+function startConfiguredGame(){settings={gameMode:'race',difficulty:$('difficulty').value,duration:+$('duration').value};players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('mathDetectivePlayerNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}pi=0;seed=(Date.now()>>>0);settings.baseSeed=seed;showTransition()}
 function showTransition(){$('turnTitle').textContent=`${players[pi].name}, get ready!`;show('transition')}
-function beginPlayer(){score=questions=correct=wrong=0;seed=mode==='local'?(((settings.baseSeed??seed)+(pi*2654435761))>>>0):(settings.baseSeed??seed);$('who').textContent=players[pi].name;$('score').textContent=0;show('game');endAt=performance.now()+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);newQuestion();startListening()}
+function beginPlayer(){score=questions=correct=wrong=0;seed=mode==='local'?(((settings.baseSeed??seed)+(pi*2654435761))>>>0):(settings.baseSeed??seed);$('who').textContent=players[pi].name;$('score').textContent=0;show('game');endAt=performance.now()+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);configureGameModeUI();newQuestion();startListening()}
 function tick(){let left=Math.max(0,Math.ceil((endAt-performance.now())/1000));$('time').textContent=left;if(performance.now()>=endAt)finishPlayer()}
 function rng(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 function ri(a,b){return Math.floor(rng()*(b-a+1))+a}
@@ -135,6 +136,136 @@ function pickPhrase(a){return a[Math.floor(Math.random()*a.length)]}
 function spokenOp(op){return op==='+'?'plus':op==='-'?'minus':op==='*'?'times':'divided by'}
 function spokenNumber(n){return n<0?`negative ${Math.abs(n)}`:String(n)}
 function equationSpeech(q){return `${spokenNumber(q.a)} ${spokenOp(q.op)} ${spokenNumber(q.b)} equals ${spokenNumber(q.r)}.`}
+
+function configureGameModeUI(){
+ document.querySelector('.ops').style.display='grid';
+ document.querySelector('.ops').classList.remove('guideOnly');
+ $('equationVoiceBtn').style.display='none';
+ $('gameHint').textContent='Tap an operator or say its name.';
+}
+function setEquationVoice(on){
+ equationVoiceActive=on;
+ const b=$('equationVoiceBtn'); if(!b)return;
+ b.textContent=on?'🎤 Voice: ON':'🎤 Voice: OFF';
+ b.style.background=on?'#159957':'#d9363e';
+}
+function numberWords(n){
+ n=Number(n); if(!Number.isInteger(n))return String(n); if(n<0)return 'negative '+numberWords(-n);
+ const a=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+ const t=['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+ if(n<20)return a[n]; if(n<100)return t[Math.floor(n/10)]+(n%10?' '+a[n%10]:'');
+ if(n<1000)return a[Math.floor(n/100)]+' hundred'+(n%100?' '+numberWords(n%100):'');
+ return String(n)
+}
+function normEqText(x){
+ return String(x).toLowerCase()
+  .replace(/−/g,' minus ').replace(/×|\*/g,' times ').replace(/÷|\//g,' divided by ')
+  .replace(/\+/g,' plus ').replace(/=/g,' equals ')
+  .replace(/[^a-z0-9\- ]/g,' ')
+  .replace(/\b(is equal to|is equals to|equals to|equal to|equal|is)\b/g,' equals ')
+  .replace(/\b(add|added|addition)\b/g,' plus ')
+  .replace(/\b(subtract|subtraction|take away)\b/g,' minus ')
+  .replace(/\b(multiply|multiplied|multiplication|cross)\b/g,' times ')
+  .replace(/\b(divide|division|over)\b/g,' divided by ')
+  .replace(/\s+/g,' ').trim()
+}
+function expectedNumberVariants(n){
+ const base=[String(n),numberWords(n)];
+ // Common speech-recognition homophones, useful especially for children's voices.
+ const w=numberWords(n);
+ const hom=w.replace(/\btwo\b/g,'to').replace(/\bfour\b/g,'for').replace(/\beight\b/g,'ate');
+ if(hom!==w)base.push(hom);
+ return [...new Set(base.map(normEqText))]
+}
+function fullEquationAccepted(text,q){
+ const got=normEqText(text), op=normEqText(spokenOp(q.op));
+ const A=expectedNumberVariants(q.a),B=expectedNumberVariants(q.b),R=expectedNumberVariants(q.r);
+ // Accept natural recognizer renderings such as "2 + 2 = 4", "two plus two is four",
+ // and word/digit mixtures, but still require the complete equation in the right order.
+ for(const a of A)for(const b of B)for(const r of R){
+   const expected=`${a} ${op} ${b} equals ${r}`;
+   // Some browsers add harmless filler or split/rejoin recognition chunks.
+   // Accept the complete expected equation when it appears in the transcript.
+   if(got===expected || (` ${got} `).includes(` ${expected} `))return true;
+ }
+ return false
+}
+function judgeFullEquation(text){
+ if(locked||!current||performance.now()>=endAt)return;
+ locked=true; const ok=fullEquationAccepted(text,current);
+ if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}
+ else{wrong++;$('feedback').className='feedback bad';$('feedback').textContent='✕ Wrong! 0'}
+ $('score').textContent=score; setEquationVoice(false); equationVoiceTranscript='';
+ speak(ok?'Correct':'Wrong'); setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},650)
+}
+function toggleEquationVoice(){
+ if(settings.gameMode!=='equation'||locked||!current)return;
+ if(equationVoiceActive){
+   // Only the player turns listening off. Judge the best complete transcript collected so far.
+   setEquationVoice(false); stopEquationListening();
+   const heard=(equationVoiceCandidates.find(c=>fullEquationAccepted(c,current))||equationVoiceTranscript).trim();
+   if(heard)judgeFullEquation(heard);
+   else {$('feedback').className='feedback bad';$('feedback').textContent='✕ Wrong! 0';wrong++;questions=Math.max(questions,1);setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},650)}
+   return;
+ }
+ equationVoiceTranscript=''; equationVoiceCandidates=[]; setEquationVoice(true); $('feedback').textContent=''; startEquationListening()
+}
+function stopEquationListening(){
+ equationVoiceActive=false;
+ if(recognition){try{recognition.abort()}catch(e){}recognition=null}
+}
+function startEquationListening(){
+ if(!equationVoiceActive||locked)return;
+ let SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){setEquationVoice(false);$('feedback').className='feedback bad';$('feedback').textContent='Voice recognition is not available.';return}
+ if(recognition){try{recognition.abort()}catch(e){}recognition=null}
+ let r=new SR(); recognition=r; r.lang='en-US'; r.continuous=true; r.interimResults=true; r.maxAlternatives=10;
+ r.onresult=e=>{
+   // Web Speech frequently returns one equation as several result chunks, e.g.
+   // ["two plus two"] ["equals four"]. Keep the chunks and join them instead
+   // of judging only the last fragment. Also keep alternatives because children's
+   // speech is often correct in a non-top recognition alternative.
+   const groups=[];
+   for(let i=0;i<e.results.length;i++){
+     const alts=[];
+     for(let j=0;j<Math.min(e.results[i].length,10);j++){
+       const t=e.results[i][j].transcript.trim();
+       if(t&&!alts.includes(t))alts.push(t);
+     }
+     if(alts.length)groups.push(alts);
+   }
+   let candidates=[''];
+   for(const g of groups){
+     const next=[];
+     for(const prefix of candidates)for(const part of g.slice(0,5)){
+       next.push((prefix+' '+part).trim());
+       if(next.length>=125)break;
+     }
+     candidates=next.slice(0,125);
+   }
+   // Also test every individual alternative and preserve candidates across browser restarts.
+   for(const g of groups)for(const t of g)candidates.push(t);
+   for(const c of candidates)if(c&&!equationVoiceCandidates.includes(c))equationVoiceCandidates.push(c);
+   equationVoiceCandidates=equationVoiceCandidates.slice(-300);
+   const correct=equationVoiceCandidates.find(c=>fullEquationAccepted(c,current));
+   if(correct)equationVoiceTranscript=correct;
+   else if(candidates[0]) equationVoiceTranscript=candidates[0];
+   $('feedback').textContent='';
+ };
+ r.onerror=e=>{
+   if(recognition===r)recognition=null;
+   // no-speech/network-style interruptions must not switch the button off or judge the answer
+   if(equationVoiceActive && e.error!=='not-allowed' && e.error!=='service-not-allowed')setTimeout(startEquationListening,180);
+   if(equationVoiceActive && (e.error==='not-allowed'||e.error==='service-not-allowed')){setEquationVoice(false);$('feedback').className='feedback bad';$('feedback').textContent='Microphone permission is required.'}
+ };
+ r.onend=()=>{
+   if(recognition===r)recognition=null;
+   // Browsers often stop recognition by themselves. Keep Full Equation mode ON and restart
+   // until the player explicitly presses the green button.
+   if(equationVoiceActive&&!locked)setTimeout(startEquationListening,160)
+ };
+ try{r.start()}catch(e){recognition=null;if(equationVoiceActive)setTimeout(startEquationListening,220)}
+}
 function showListening(){
  if(settings&&settings.gameMode==='practice'&&!locked&&$('game').classList.contains('active')){
    $('feedback').className='feedback';
@@ -145,22 +276,18 @@ function practiceSpeak(text,done,rate=.96){stopListening();speechSynthesis.cance
 function speakPracticeAnswer(ok,q,done){
  stopListening();speechSynthesis.cancel();
  if(!('speechSynthesis' in window)){done&&done();return}
- const verdict=new SpeechSynthesisUtterance(ok?'Right':'Wrong');
- verdict.lang='en-US';verdict.rate=1.02;verdict.volume=1;
- const equation=new SpeechSynthesisUtterance(equationSpeech(q));
- equation.lang='en-US';equation.rate=.88;equation.volume=1;
- verdict.onend=()=>setTimeout(()=>speechSynthesis.speak(equation),170);
- verdict.onerror=()=>speechSynthesis.speak(equation);
- equation.onend=()=>done&&done();
- equation.onerror=()=>done&&done();
+ const verdict=new SpeechSynthesisUtterance(ok?'Correct':'Wrong');
+ verdict.lang='en-US';verdict.rate=.82;verdict.volume=1;
+ verdict.onend=()=>setTimeout(()=>done&&done(),500);
+ verdict.onerror=()=>setTimeout(()=>done&&done(),500);
  speechSynthesis.speak(verdict);
 }
-function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active')){showListening();startListening()}}),120)}
+function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;equationVoiceTranscript='';equationVoiceCandidates=[];setEquationVoice(false);$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active')){showListening();startListening()}}),120)}
 function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;const ok=op===current.op,q=current;if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`}$('score').textContent=score;if(settings.gameMode==='practice'){speakPracticeAnswer(ok,q,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()})}else{speak(ok?'Correct':'Wrong');setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}}
 function skipQuestion(){
  if(locked||!current||performance.now()>=endAt)return;
  locked=true;$('feedback').className='feedback';$('feedback').textContent='Skipped — no points lost';
- if(settings.gameMode==='practice')practiceSpeak(`Skipped. The correct equation is ${equationSpeech(current)}`,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()});
+ if(settings.gameMode==='practice')practiceSpeak('Skipped.',()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()});
  else setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},350)
 }
 function symbol(op){return op==='*'?'×':op==='/'?'÷':op}
@@ -175,7 +302,7 @@ function tutorialSay(text,done){speechSynthesis.cancel();let u=new SpeechSynthes
 function playTutorialOperator(){tutorialSay('Minus')}
 function speakOperationSet(which){let texts={plus:'Plus. Add. Addition. Added.',minus:'Minus. Subtract. Subtraction. Take away.',multiply:'Times. Multiply. Multiplied. Multiplication.',divide:'Divide. Divided by. Division. Over.'};tutorialSay(texts[which])}
 function playAllOperations(){tutorialSay('Plus. Add. Addition. Added. Minus. Subtract. Subtraction. Take away. Times. Multiply. Multiplied. Multiplication. Divide. Divided by. Division. Over.')}
-function closeTutorial(){let paused=performance.now()-tutorialPausedAt;endAt+=paused;show('game');timer=setInterval(tick,100);startListening()}
+function closeTutorial(){let paused=performance.now()-tutorialPausedAt;endAt+=paused;show('game');timer=setInterval(tick,100);configureGameModeUI();startListening()}
 function restartSame(){
  clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();
  // A restart is a fresh game: use a new seed so the mathematics sequence changes.
@@ -216,7 +343,7 @@ function playAgain(){pi=0;showTransition()}
 function returnHome(){clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();show('home')}
 
 function roomCodeNew(){return Math.random().toString(36).slice(2,8).toUpperCase()}
-function readOnlineSettings(){return {gameMode:$('gameMode').value,difficulty:$('difficulty').value,duration:+$('duration').value}}
+function readOnlineSettings(){return {gameMode:'race',difficulty:$('difficulty').value,duration:+$('duration').value}}
 function createRoom(){
  let name=$('onlineName').value.trim()||'Host';try{localStorage.setItem('mathDetectiveOnlineName',name)}catch(e){}
  let c=roomCodeNew();$('roomCode').value=c;isHost=true;conns=[];roomPlayers=[name];
@@ -283,5 +410,5 @@ function checkOnlineDone(){
 try{$('onlineName').value=localStorage.getItem('mathDetectiveOnlineName')||''}catch(e){}
 renderNames();
 </script>
-<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 24</div>
+<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 31</div>
 </body></html>
