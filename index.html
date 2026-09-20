@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Math Detective</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 :root{--ink:#17324d;--blue:#2878ff;--green:#24b47e;--red:#ef476f;--shadow:0 10px 28px #16324a20}
 *{box-sizing:border-box} html,body{min-height:100%;overscroll-behavior-y:auto}
@@ -18,30 +19,38 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 .gamebox{width:min(760px,100%);background:#dfe7f3;border-radius:30px;padding:24px 16px;min-height:510px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .equation{font-size:clamp(38px,11vw,70px);font-weight:800;color:#111;text-align:center;margin:12px 0 52px;white-space:nowrap}
 .ops{display:grid;grid-template-columns:repeat(2,minmax(100px,145px));gap:22px 34px}.op{height:128px;background:#fff;border-radius:18px;box-shadow:0 6px 12px #0002;font-size:64px;color:#000;display:flex;align-items:center;justify-content:center}.op:active{transform:scale(.95)}
-.feedback{height:38px;margin:12px 0 4px;font-size:24px;font-weight:1000;text-align:center}.hint{text-align:center;font-weight:800;margin-bottom:10px}
+.feedback{min-height:38px;margin:12px 0 4px;font-size:24px;font-weight:1000;text-align:center}.listeningBox{display:inline-block;background:#dff7e8;color:#08783f;border:2px solid #35b76f;border-radius:12px;padding:7px 18px;box-shadow:0 2px 6px #0001}.hint{text-align:center;font-weight:800;margin-bottom:10px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}.actions .btn{padding:10px 12px}
 .good{color:#168b56}.bad{color:#d82445}.hidden{display:none!important}
-.scoreboard{width:100%;border-collapse:collapse}.scoreboard th,.scoreboard td{padding:10px;border-bottom:1px solid #dce7ef;text-align:center}.winner{text-align:center;font-size:27px;font-weight:1000;margin:14px}
-.tutEq{font-size:36px;text-align:center;font-weight:900;margin:18px}.tutOps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:330px;margin:auto}.tutOps div{background:#f2f6fb;border-radius:14px;padding:14px;text-align:center;font-size:30px;font-weight:900}.callout{background:#eef7ff;border-radius:16px;padding:12px;margin:12px 0;font-weight:750}
+.scoreboard{width:100%;border-collapse:collapse}.scoreboard th,.scoreboard td{padding:10px;border-bottom:1px solid #dce7ef;text-align:center}.rankCell{font-size:20px;font-weight:1000;color:#2878ff}.winner{text-align:center;font-size:27px;font-weight:1000;margin:14px}
+.tutEq{font-size:36px;text-align:center;font-weight:900;margin:18px}.tutOps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:330px;margin:auto}.tutOps div{background:#f2f6fb;border-radius:14px;padding:14px;text-align:center;font-size:30px;font-weight:900}.callout{background:#eef7ff;border-radius:16px;padding:12px;margin:12px 0;font-weight:750}.synGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.synCard{background:#f2f6fb;border-radius:14px;padding:12px;text-align:center}.synOp{font-size:34px;font-weight:1000}.synWords{font-size:14px;font-weight:800;line-height:1.45}.tutNav{display:flex;gap:10px}.tutNav .btn{flex:1}
 @media(max-height:700px){.screen{padding-top:40px}.gamebox{min-height:430px;padding:12px}.equation{margin-bottom:28px}.op{height:100px}.ops{gap:14px 26px}}
 </style>
 </head>
 <body>
-<div class="version">Version 1</div>
-
 <section id="home" class="screen active"><div class="panel">
 <h1>🧮 Math Detective</h1><p class="sub">Think. Choose. Speak.</p>
 <button class="btn primary wide" onclick="chooseMode('local')">📱 Local Game</button>
+<button class="btn primary wide" onclick="chooseMode('online')">🌐 Online Game</button>
 <p class="sub" style="margin-top:20px">Designed &amp; Created by Sadegh Mosleh · © 2026</p>
 </div></section>
 
 <section id="setup" class="screen"><div class="panel">
-<h2>Game Setup</h2>
+<h2 id="setupTitle">Game Setup</h2>
+<div id="localFields">
 <div class="field"><label>Number of Players</label><select id="playerCount"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
 <div id="names"></div>
-<div class="field"><label>Difficulty Level</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
+</div>
+<div id="onlineFields" class="hidden">
+<div class="field"><label>Your name</label><input id="onlineName" placeholder="Player name"></div>
+<button class="btn secondary wide" onclick="createRoom()">Create Room</button>
+<div class="field"><label>Room code</label><input id="roomCode" maxlength="6" placeholder="ABC123"></div>
+<button class="btn secondary wide" onclick="joinRoom()">Join Room</button>
+<div id="roomInfo" class="sub"></div>
+</div>
+<div class="field"><label>Game Mode</label><select id="gameMode"><option value="race" selected>🏁 Race Mode</option><option value="practice">🎓 Practice Mode</option></select></div><div class="field"><label>Difficulty Level</label><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
 <div class="field"><label>Game Time</label><select id="duration"><option value="30" selected>30 seconds</option><option value="60">60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option></select></div>
-<button class="btn primary wide" onclick="startConfiguredGame()">Start Game</button><button class="btn secondary wide" onclick="show('home')">Back</button>
+<button id="startBtn" class="btn primary wide" onclick="startConfiguredGame()">Start Game</button><button class="btn secondary wide" onclick="show('home')">Back</button>
 </div></section>
 
 <section id="transition" class="screen"><div class="panel"><h1 id="turnTitle">Ready?</h1><p class="sub">Your timer begins when you press Start.</p><button class="btn primary wide" onclick="beginPlayer()">▶ Start</button></div></section>
@@ -54,35 +63,53 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <div class="ops">
 <button class="op" onclick="answer('+')">+</button><button class="op" onclick="answer('-')">−</button>
 <button class="op" onclick="answer('*')">×</button><button class="op" onclick="answer('/')">÷</button>
-</div></div>
+</div>
+<button class="btn secondary" style="margin-top:24px;min-width:150px" onclick="skipQuestion()">⏭ Skip</button>
+</div>
 <div class="actions"><button class="btn secondary" onclick="returnHome()">⌂ Main Menu</button><button class="btn secondary" onclick="openTutorial()">📘 Tutorial</button><button class="btn secondary" onclick="restartSame()">↻ Restart</button></div>
 </section>
 
-<section id="results" class="screen"><div class="panel"><h1>🏆 Results</h1><div id="winner" class="winner"></div><table class="scoreboard"><thead><tr><th>Player</th><th>Score</th><th>Questions</th><th>Correct</th><th>Wrong</th></tr></thead><tbody id="resultRows"></tbody></table><button class="btn primary wide" onclick="playAgain()">↻ Play Again</button><button class="btn secondary wide" onclick="returnHome()">⌂ Main Menu</button></div></section>
+<section id="results" class="screen"><div class="panel"><h1>🏆 Results</h1><div id="winner" class="winner"></div><table class="scoreboard"><thead><tr><th>Rank</th><th>Player</th><th>Correct</th><th>Wrong</th><th>Score</th><th>Questions</th></tr></thead><tbody id="resultRows"></tbody></table><button class="btn primary wide" onclick="playAgain()">↻ Play Again</button><button class="btn secondary wide" onclick="returnHome()">⌂ Main Menu</button></div></section>
 
 <section id="tutorial" class="screen"><div class="panel">
-<h1>📘 Tutorial</h1><h2>How to Play</h2>
+<h1>📘 Tutorial</h1>
+<div id="tut1">
+<h2>1. How to Play</h2>
 <p class="sub">Find the missing mathematical operation.</p>
-<div class="tutEq">−8 □ −6 = −2</div><div class="tutOps"><div>+</div><div style="outline:4px solid #24b47e">− ✓</div><div>×</div><div>÷</div></div>
-<div class="callout">You can <b>touch</b> the correct operator or <b>say its name</b>. For this example, tap − or say “minus”.</div>
-<p>Voice also understands common alternatives such as <b>add/addition</b>, <b>subtract/subtraction</b>, <b>times/multiply</b>, and <b>divide/division</b>.</p>
-<button class="btn secondary wide" onclick="closeTutorial()">← Back to Game</button>
+<div class="tutEq">−8 □ −6 = −2</div>
+<div class="tutOps"><div>+</div><div id="tutorialMinus" style="outline:4px solid #24b47e">− ✓</div><div>×</div><div>÷</div></div>
+<div class="callout">You can <b>touch</b> the correct operator or <b>say its name</b>. Here the correct operator is <b>minus</b>.<br><br>If you do not know the answer, tap <b>Skip</b> to move to the next question with <b>no points lost</b>.<br><br><b>🏁 Race Mode:</b> fast gameplay with short feedback.<br><b>🎓 Practice Mode:</b> the game asks a varied spoken question before each equation. After the answer, it gives varied spoken feedback and reads the complete correct equation aloud.</div>
+<div class="tutNav"><button class="btn secondary" onclick="closeTutorial()">← Back to Game</button><button class="btn primary" onclick="tutorialPage(2)">Next →</button></div>
+</div>
+<div id="tut2" class="hidden">
+<h2>2. Operation Names</h2>
+<p class="sub">The first operation is pronounced automatically. Tap any operation to hear its accepted names.</p>
+<div class="synGrid">
+<button class="synCard" onclick="speakOperationSet('plus')"><div class="synOp">+</div><div class="synWords">Plus · Add · Addition · Added</div></button>
+<button class="synCard" onclick="speakOperationSet('minus')"><div class="synOp">−</div><div class="synWords">Minus · Subtract · Subtraction · Take away</div></button>
+<button class="synCard" onclick="speakOperationSet('multiply')"><div class="synOp">×</div><div class="synWords">Times · Multiply · Multiplied · Multiplication</div></button>
+<button class="synCard" onclick="speakOperationSet('divide')"><div class="synOp">÷</div><div class="synWords">Divide · Divided by · Division · Over</div></button>
+</div>
+<div class="tutNav"><button class="btn secondary" onclick="tutorialPage(1)">← Previous</button><button class="btn secondary" onclick="closeTutorial()">Back to Game</button></div>
+</div>
 </div></section>
 
 <script>
-let players=[],pi=0,score=0,questions=0,correct=0,wrong=0,settings={},current=null,endAt=0,timer=null,locked=false;
+let mode='local',players=[],pi=0,score=0,questions=0,correct=0,wrong=0,settings={},current=null,endAt=0,timer=null,locked=false;
+let seed=1,peer=null,conns=[],hostConn=null,isHost=false,roomPlayers=[],onlineFinished={},onlineTotal=1;
 let tutorialPausedAt=0,recognition=null,wantListening=false;
 function $(id){return document.getElementById(id)}
 function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')}
-function chooseMode(){show('setup');renderNames()}
+function chooseMode(m){mode=m;show('setup');$('setupTitle').textContent=m==='local'?'📱 Local Game':'🌐 Online Game';$('localFields').classList.toggle('hidden',m!=='local');$('onlineFields').classList.toggle('hidden',m!=='online');$('startBtn').classList.toggle('hidden',m==='online');renderNames()}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function renderNames(){let n=+$('playerCount').value,saved=[];try{saved=JSON.parse(localStorage.getItem('mathDetectivePlayerNames')||'[]')}catch(e){}let old=[...document.querySelectorAll('.pname')].map(x=>x.value);$('names').innerHTML=Array.from({length:n},(_,i)=>`<div class="field"><label>Player ${i+1}</label><input class="pname" value="${esc(old[i]||saved[i]||`Player ${i+1}`)}"></div>`).join('')}
 $('playerCount').onchange=renderNames;
-function startConfiguredGame(){settings={difficulty:$('difficulty').value,duration:+$('duration').value};players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('mathDetectivePlayerNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}pi=0;showTransition()}
+function startConfiguredGame(){settings={gameMode:$('gameMode').value,difficulty:$('difficulty').value,duration:+$('duration').value};players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('mathDetectivePlayerNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}pi=0;seed=(Date.now()>>>0);settings.baseSeed=seed;showTransition()}
 function showTransition(){$('turnTitle').textContent=`${players[pi].name}, get ready!`;show('transition')}
-function beginPlayer(){score=questions=correct=wrong=0;$('who').textContent=players[pi].name;$('score').textContent=0;show('game');endAt=performance.now()+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);newQuestion();startListening()}
+function beginPlayer(){score=questions=correct=wrong=0;seed=mode==='local'?(((settings.baseSeed??seed)+(pi*2654435761))>>>0):(settings.baseSeed??seed);$('who').textContent=players[pi].name;$('score').textContent=0;show('game');endAt=performance.now()+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);newQuestion();startListening()}
 function tick(){let left=Math.max(0,Math.ceil((endAt-performance.now())/1000));$('time').textContent=left;if(performance.now()>=endAt)finishPlayer()}
-function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function rng(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+function ri(a,b){return Math.floor(rng()*(b-a+1))+a}
 function calc(a,op,b){return op==='+'?a+b:op==='-'?a-b:op==='*'?a*b:a/b}
 function unique(a,b,result,correctOp){return ['+','-','*','/'].filter(op=>b!==0&&Math.abs(calc(a,op,b)-result)<1e-9).length===1}
 function generate(){
@@ -92,30 +119,169 @@ function generate(){
    if(level==='easy'){
      if(op==='/'){b=ri(1,10);r=ri(1,10);a=b*r}else{a=ri(0,20);b=ri(0,20);if(op==='-'&&b>a)[a,b]=[b,a];r=calc(a,op,b)}
    }else if(level==='medium'){
-     if(op==='/'){b=ri(1,12)*(Math.random()<.25?-1:1);r=ri(-10,15);if(r===0)r=ri(1,10);a=b*r}else{a=ri(-30,50);b=ri(-20,30);r=calc(a,op,b)}
+     if(op==='/'){b=ri(1,12)*(rng()<.25?-1:1);r=ri(-10,15);if(r===0)r=ri(1,10);a=b*r}else{a=ri(-30,50);b=ri(-20,30);r=calc(a,op,b)}
    }else{
-     if(op==='/'){b=ri(2,15)*(Math.random()<.5?-1:1);r=ri(-15,20);if(r===0)r=ri(2,12);a=b*r}else if(op==='*'){a=ri(-15,20);b=ri(-12,15);r=a*b}else{a=ri(-100,120);b=ri(-80,100);r=calc(a,op,b)}
+     if(op==='/'){b=ri(2,15)*(rng()<.5?-1:1);r=ri(-15,20);if(r===0)r=ri(2,12);a=b*r}else if(op==='*'){a=ri(-15,20);b=ri(-12,15);r=a*b}else{a=ri(-100,120);b=ri(-80,100);r=calc(a,op,b)}
    }
    if(b!==0&&Number.isInteger(r)&&unique(a,b,r,op))return {a,b,r,op}
  }
  return {a:8,b:3,r:11,op:'+'}
 }
 function fmt(n){return n<0?`(${n})`:String(n)}
-function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`}
-function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;if(op===current.op){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1';speak('Correct')}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`;speak('Wrong')}$('score').textContent=score;setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}
+const practicePrompts=['Which operation is correct?','Which operator do you select?','Choose the correct operation.','What operation makes this equation correct?','Can you find the missing operator?','Select the operation that completes the equation.','Which mathematical operation belongs here?'];
+const practiceCorrect=['Correct! Well done.','That is correct!','Great job! You got it right.','Excellent! That is the right operation.','Nice work! Correct answer.'];
+const practiceWrong=['Not quite. Listen to the correct equation.','That is not correct. Here is the correct equation.','Good try. Listen to the right operation.','Almost. Here is the complete correct equation.','That answer is incorrect. Listen to the correct equation.'];
+function pickPhrase(a){return a[Math.floor(Math.random()*a.length)]}
+function spokenOp(op){return op==='+'?'plus':op==='-'?'minus':op==='*'?'times':'divided by'}
+function spokenNumber(n){return n<0?`negative ${Math.abs(n)}`:String(n)}
+function equationSpeech(q){return `${spokenNumber(q.a)} ${spokenOp(q.op)} ${spokenNumber(q.b)} equals ${spokenNumber(q.r)}.`}
+function showListening(){
+ if(settings&&settings.gameMode==='practice'&&!locked&&$('game').classList.contains('active')){
+   $('feedback').className='feedback';
+   $('feedback').innerHTML='<span class="listeningBox">🎤 Listening — Speak now</span>';
+ }
+}
+function practiceSpeak(text,done,rate=.96){stopListening();speechSynthesis.cancel();if(!('speechSynthesis' in window)){done&&done();return}let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=rate;u.volume=1;u.onend=()=>done&&done();u.onerror=()=>done&&done();speechSynthesis.speak(u)}
+function speakPracticeAnswer(ok,q,done){
+ stopListening();speechSynthesis.cancel();
+ if(!('speechSynthesis' in window)){done&&done();return}
+ const verdict=new SpeechSynthesisUtterance(ok?'Right':'Wrong');
+ verdict.lang='en-US';verdict.rate=1.02;verdict.volume=1;
+ const equation=new SpeechSynthesisUtterance(equationSpeech(q));
+ equation.lang='en-US';equation.rate=.88;equation.volume=1;
+ verdict.onend=()=>setTimeout(()=>speechSynthesis.speak(equation),170);
+ verdict.onerror=()=>speechSynthesis.speak(equation);
+ equation.onend=()=>done&&done();
+ equation.onerror=()=>done&&done();
+ speechSynthesis.speak(verdict);
+}
+function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active')){showListening();startListening()}}),120)}
+function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;const ok=op===current.op,q=current;if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`}$('score').textContent=score;if(settings.gameMode==='practice'){speakPracticeAnswer(ok,q,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()})}else{speak(ok?'Correct':'Wrong');setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}}
+function skipQuestion(){
+ if(locked||!current||performance.now()>=endAt)return;
+ locked=true;$('feedback').className='feedback';$('feedback').textContent='Skipped — no points lost';
+ if(settings.gameMode==='practice')practiceSpeak(`Skipped. The correct equation is ${equationSpeech(current)}`,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()});
+ else setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},350)
+}
 function symbol(op){return op==='*'?'×':op==='/'?'÷':op}
 function speak(t){if(!('speechSynthesis'in window))return;let was=wantListening;stopListening();let u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.9;u.onend=()=>{if(was&&$('game').classList.contains('active'))startListening()};speechSynthesis.cancel();speechSynthesis.speak(u)}
 const voiceMap={'+':['plus','add','addition','added'],'-':['minus','subtract','subtraction','take away'],'*':['times','multiply','multiplied','multiplication','cross'],'/':['divide','divided','division','over']};
 function detectVoice(t){t=t.toLowerCase().replace(/[^a-z ]/g,' ');for(const [op,words] of Object.entries(voiceMap))if(words.some(w=>t.includes(w)))return op;return null}
-function startListening(){wantListening=true;if(recognition)return;let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;let r=new SR();recognition=r;r.lang='en-US';r.continuous=false;r.interimResults=false;r.maxAlternatives=5;r.onresult=e=>{let heard=[...e.results[0]].map(x=>x.transcript);recognition=null;let op=heard.map(detectVoice).find(Boolean);if(op)answer(op);if(wantListening&&!locked)setTimeout(startListening,180)};r.onerror=()=>{};r.onend=()=>{if(recognition===r)recognition=null;if(wantListening&&!locked&&$('game').classList.contains('active'))setTimeout(startListening,220)};try{r.start()}catch(e){recognition=null}}
+function startListening(){wantListening=true;if(recognition)return;let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;let r=new SR();recognition=r;r.lang='en-US';r.continuous=false;r.interimResults=false;r.maxAlternatives=5;r.onresult=e=>{let heard=[...e.results[0]].map(x=>x.transcript);recognition=null;let op=heard.map(detectVoice).find(Boolean);if(op){$('feedback').textContent='';answer(op)}else if(!locked&&$('game').classList.contains('active')){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.';if(wantListening)setTimeout(()=>{showListening();startListening()},220)}else if(wantListening&&!locked)setTimeout(()=>{showListening();startListening()},180)};r.onerror=e=>{if(!locked&&$('game').classList.contains('active')&&e.error!=='aborted'){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.'}};r.onend=()=>{if(recognition===r)recognition=null;if(wantListening&&!locked&&$('game').classList.contains('active'))setTimeout(startListening,220)};try{r.start()}catch(e){recognition=null}}
 function stopListening(){wantListening=false;if(recognition){try{recognition.abort()}catch(e){}recognition=null}}
-function openTutorial(){tutorialPausedAt=performance.now();clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();show('tutorial')}
+function openTutorial(){tutorialPausedAt=performance.now();clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();tutorialPage(1);show('tutorial');setTimeout(playTutorialOperator,350)}
+function tutorialPage(n){speechSynthesis.cancel();$('tut1').classList.toggle('hidden',n!==1);$('tut2').classList.toggle('hidden',n!==2);if(n===1)setTimeout(playTutorialOperator,250);if(n===2)setTimeout(()=>speakOperationSet('plus'),300)}
+function tutorialSay(text,done){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.82;u.onend=()=>done&&done();u.onerror=()=>done&&done();speechSynthesis.speak(u)}
+function playTutorialOperator(){tutorialSay('Minus')}
+function speakOperationSet(which){let texts={plus:'Plus. Add. Addition. Added.',minus:'Minus. Subtract. Subtraction. Take away.',multiply:'Times. Multiply. Multiplied. Multiplication.',divide:'Divide. Divided by. Division. Over.'};tutorialSay(texts[which])}
+function playAllOperations(){tutorialSay('Plus. Add. Addition. Added. Minus. Subtract. Subtraction. Take away. Times. Multiply. Multiplied. Multiplication. Divide. Divided by. Division. Over.')}
 function closeTutorial(){let paused=performance.now()-tutorialPausedAt;endAt+=paused;show('game');timer=setInterval(tick,100);startListening()}
-function restartSame(){clearInterval(timer);stopListening();beginPlayer()}
-function finishPlayer(){if(!timer)return;clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();players[pi]={...players[pi],score,questions,correct,wrong};pi++;if(pi<players.length)showTransition();else showResults()}
-function showResults(){let sorted=[...players].sort((a,b)=>b.score-a.score);let best=sorted[0]?.score,w=sorted.filter(x=>x.score===best);$('winner').textContent=w.length===1?`🎉 ${w[0].name} wins!`:`🤝 Tie: ${w.map(x=>x.name).join(' & ')}`;$('resultRows').innerHTML=sorted.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.score}</td><td>${x.questions}</td><td>${x.correct}</td><td>${x.wrong}</td></tr>`).join('');show('results')}
+function restartSame(){
+ clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();
+ // A restart is a fresh game: use a new seed so the mathematics sequence changes.
+ seed=(Date.now()>>>0);
+ settings.baseSeed=seed;
+ if(mode==='online'&&isHost){
+   onlineFinished={};
+   broadcast({type:'start',settings,seed,players:onlineTotal});
+ }
+ beginPlayer()
+}
+function finishPlayer(){if(!timer)return;clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();let res={name:players[pi].name,score,questions,correct,wrong};players[pi]={...players[pi],...res};if(mode==='online'){sendFinish(res);return}pi++;if(pi<players.length)showTransition();else showResults()}
+function ordinal(n){
+ const words=['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth','Ninth','Tenth'];
+ return words[n-1]||`${n}th`
+}
+function announceWinner(winners){
+ if(!('speechSynthesis' in window)||!winners.length)return;
+ speechSynthesis.cancel();
+ let text=winners.length===1
+   ? `${winners[0].name} wins! Congratulations!`
+   : `${winners.map(x=>x.name).join(' and ')} win! Congratulations!`;
+ let u=new SpeechSynthesisUtterance(text);
+ u.lang='en-US';u.rate=.88;u.pitch=1.08;u.volume=1;
+ speechSynthesis.speak(u)
+}
+function showResults(results){
+ if(Array.isArray(results)) players=results;
+ let sorted=[...players].sort((a,b)=>b.score-a.score||b.correct-a.correct||a.wrong-b.wrong);
+ let best=sorted[0]?.score;
+ let w=sorted.filter(x=>x.score===best);
+ $('winner').textContent=w.length===1?`🎉 ${w[0].name} wins!`:`🤝 ${w.map(x=>x.name).join(' & ')} win!`;
+ $('resultRows').innerHTML=sorted.map((x,i)=>`<tr><td class="rankCell">${i+1}</td><td>${esc(x.name)}</td><td>${x.correct}</td><td>${x.wrong}</td><td><b>${x.score}</b></td><td>${x.questions}</td></tr>`).join('');
+ show('results');
+ setTimeout(()=>announceWinner(w),450)
+}
 function playAgain(){pi=0;showTransition()}
 function returnHome(){clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();show('home')}
+
+function roomCodeNew(){return Math.random().toString(36).slice(2,8).toUpperCase()}
+function readOnlineSettings(){return {gameMode:$('gameMode').value,difficulty:$('difficulty').value,duration:+$('duration').value}}
+function createRoom(){
+ let name=$('onlineName').value.trim()||'Host';try{localStorage.setItem('mathDetectiveOnlineName',name)}catch(e){}
+ let c=roomCodeNew();$('roomCode').value=c;isHost=true;conns=[];roomPlayers=[name];
+ peer=new Peer('math-detective-'+c,{host:'0.peerjs.com',port:443,path:'/',secure:true,pingInterval:5000});
+ peer.on('open',()=>{$('roomInfo').textContent=`Room ${c} — waiting for players…`; $('startBtn').classList.remove('hidden');$('startBtn').textContent='Start Online Game';$('startBtn').onclick=startOnlineHost});
+ peer.on('connection',conn=>{conns.push(conn);conn.on('data',d=>hostData(conn,d));conn.on('close',()=>{});});
+ peer.on('error',e=>{$('roomInfo').textContent='Connection error: '+(e.type||'unknown')+(e.message?' — '+e.message:'')})
+}
+function joinRoom(){
+ let name=$('onlineName').value.trim(),c=$('roomCode').value.trim().toUpperCase();if(!name||!c)return alert('Enter your name and room code.');
+ try{localStorage.setItem('mathDetectiveOnlineName',name)}catch(e){}
+ isHost=false;peer=new Peer(undefined,{host:'0.peerjs.com',port:443,path:'/',secure:true,pingInterval:5000});
+ peer.on('open',()=>{hostConn=peer.connect('math-detective-'+c,{reliable:true});hostConn.on('open',()=>{hostConn.send({type:'join',name});$('roomInfo').textContent=`Joined room ${c}. Waiting for host…`});hostConn.on('data',guestData);hostConn.on('close',()=>{$('roomInfo').textContent='Host disconnected.'})});
+ peer.on('error',e=>{$('roomInfo').textContent='Connection error: '+(e.type||'unknown')+(e.message?' — '+e.message:'')})
+}
+document.addEventListener('visibilitychange',()=>{
+ if(document.visibilityState==='visible'&&peer&&!peer.destroyed&&peer.disconnected&&peer.reconnect){
+   try{
+     peer.reconnect();
+     if(isHost&&$('roomCode').value.trim())$('roomInfo').textContent=`Reconnecting room ${$('roomCode').value.trim().toUpperCase()}…`;
+   }catch(e){}
+ }
+});
+window.addEventListener('pageshow',()=>{
+ if(peer&&!peer.destroyed&&peer.disconnected&&peer.reconnect){
+   try{peer.reconnect()}catch(e){}
+ }
+});
+function broadcast(d){conns.forEach(c=>{if(c.open)c.send(d)})}
+function hostData(conn,d){
+ if(d.type==='join'){if(roomPlayers.includes(d.name)){conn.send({type:'reject',msg:'That name is already used.'});return}conn.playerName=d.name;roomPlayers.push(d.name);broadcast({type:'lobby',players:roomPlayers});$('roomInfo').textContent=`Players: ${roomPlayers.join(', ')}`}
+ if(d.type==='finish'){onlineFinished[d.result.name]=d.result;checkOnlineDone()}
+}
+function guestData(d){
+ if(d.type==='lobby')$('roomInfo').textContent='Players: '+d.players.join(', ');
+ if(d.type==='reject')alert(d.msg);
+ if(d.type==='start'){mode='online';settings=d.settings;settings.baseSeed=d.seed;seed=d.seed;players=[{name:$('onlineName').value.trim()}];pi=0;onlineTotal=d.players;showTransition();$('turnTitle').textContent=`${players[0].name}, get ready!`}
+ if(d.type==='results')showResults(d.results)
+}
+function startOnlineHost(){
+ if(roomPlayers.length<2){
+   $('roomInfo').textContent='At least 2 players are required. Wait for another player to join.';
+   return;
+ }
+ mode='online';settings=readOnlineSettings();seed=(Date.now()>>>0);settings.baseSeed=seed;onlineFinished={};onlineTotal=roomPlayers.length;
+ broadcast({type:'start',settings,seed,players:onlineTotal});
+ let name=$('onlineName').value.trim()||'Host';players=[{name}];pi=0;showTransition();$('turnTitle').textContent=`${name}, get ready!`
+}
+function sendFinish(res){
+ if(isHost){onlineFinished[res.name]=res;checkOnlineDone()}
+ else if(hostConn&&hostConn.open){hostConn.send({type:'finish',result:res});$('feedback').textContent='Finished! Waiting for other players…'}
+ show('game')
+}
+function checkOnlineDone(){
+ if(Object.keys(onlineFinished).length>=onlineTotal){
+   let results=Object.values(onlineFinished).sort((a,b)=>b.score-a.score||b.correct-a.correct||a.wrong-b.wrong);
+   broadcast({type:'results',results});
+   showResults(results);
+ } else {
+   $('feedback').className='feedback';
+   $('feedback').textContent='Finished! Waiting for other players…';
+ }
+}
+try{$('onlineName').value=localStorage.getItem('mathDetectiveOnlineName')||''}catch(e){}
 renderNames();
 </script>
+<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 24</div>
 </body></html>
