@@ -15,7 +15,7 @@ body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;bac
 h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h2{text-align:center}.sub{text-align:center;opacity:.75}
 .btn,button,select,input{font:inherit}.btn,button{border:0;border-radius:16px;padding:14px 18px;font-weight:900;cursor:pointer}.primary{background:var(--blue);color:#fff}.secondary{background:#e9f1ff;color:#19436d}.wide{width:100%;margin-top:10px}
 .field{margin:13px 0}.field label{display:block;font-weight:900;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:2px solid #d9e6f2;border-radius:12px;background:#fff;font-size:16px}
-.topbar{width:min(760px,100%);display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px}.pill{background:#fff;padding:10px 13px;border-radius:16px;box-shadow:var(--shadow);font-weight:900}.timer{text-align:center;font-size:22px}.score{text-align:right}
+.topbar{width:min(760px,100%);display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:10px;flex-wrap:wrap}.pill{background:#fff;padding:10px 13px;border-radius:16px;box-shadow:var(--shadow);font-weight:900;min-width:90px}.timer{text-align:center;font-size:22px}.score{text-align:center}
 .gamebox{width:min(760px,100%);background:#dfe7f3;border-radius:30px;padding:24px 16px;min-height:510px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .equation{font-size:clamp(38px,11vw,70px);font-weight:800;color:#111;text-align:center;margin:12px 0 52px;white-space:nowrap}
 .ops{display:grid;grid-template-columns:repeat(2,minmax(100px,145px));gap:22px 34px}.op{height:128px;background:#fff;border-radius:18px;box-shadow:0 6px 12px #0002;font-size:64px;color:#000;display:flex;align-items:center;justify-content:center}.op:active{transform:scale(.95)}.ops.guideOnly .op{pointer-events:none;cursor:default}.ops.guideOnly .op:active{transform:none}
@@ -30,16 +30,18 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <body>
 <section id="home" class="screen active"><div class="panel">
 <h1>🧮 Math Detective</h1><p class="sub">Think. Choose. Speak.</p>
+<button class="btn primary wide" onclick="chooseMode('bot')">🤖 Bot Game</button>
 <button class="btn primary wide" onclick="chooseMode('local')">📱 Local Game</button>
 <button class="btn primary wide" onclick="chooseMode('online')">🌐 Online Game</button>
-<p class="sub" style="margin-top:20px">Designed &amp; Created by Sadegh Mosleh · © 2026</p>
+<p class="sub" style="margin-top:20px">Version 32 · Designed &amp; Created by Sadegh Mosleh · © 2026</p>
 </div></section>
 
 <section id="setup" class="screen"><div class="panel">
 <h2 id="setupTitle">Game Setup</h2>
 <div id="localFields">
-<div class="field"><label>Number of Players</label><select id="playerCount"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
+<div id="playerCountField" class="field"><label>Number of Players</label><select id="playerCount"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
 <div id="names"></div>
+<div id="botDifficultyField" class="field hidden"><label>Bot Difficulty</label><select id="botDifficulty"><option value="easy">Easy — slow</option><option value="medium" selected>Medium — quick</option><option value="hard">Hard — strong, not instant</option></select></div>
 </div>
 <div id="onlineFields" class="hidden">
 <div class="field"><label>Your name</label><input id="onlineName" placeholder="Player name"></div>
@@ -56,13 +58,13 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <section id="transition" class="screen"><div class="panel"><h1 id="turnTitle">Ready?</h1><p class="sub">Your timer begins when you press Start.</p><button class="btn primary wide" onclick="beginPlayer()">▶ Start</button></div></section>
 
 <section id="game" class="screen">
-<div class="topbar"><div class="pill" id="who">Player</div><div class="pill timer">⏱ <span id="time">30</span></div><div class="pill score">⭐ <span id="score">0</span></div></div>
+<div class="topbar"><div class="pill" id="who">Player</div><div class="pill timer">⏱ <span id="time">30</span></div><div class="pill score">⭐ <span id="score">0</span></div><div id="botScorePill" class="pill score hidden">🤖 <span id="botScore">0</span></div></div>
 <div class="gamebox">
 <div class="hint" id="gameHint">Tap an operator or say its name.</div><div id="feedback" class="feedback"></div>
 <div id="equation" class="equation"></div>
 <div class="ops">
-<button class="op" onclick="answer('+')">+</button><button class="op" onclick="answer('-')">−</button>
-<button class="op" onclick="answer('*')">×</button><button class="op" onclick="answer('/')">÷</button>
+<button class="op" data-op="+" onclick="answer('+','tap')">+</button><button class="op" data-op="-" onclick="answer('-','tap')">−</button>
+<button class="op" data-op="*" onclick="answer('*','tap')">×</button><button class="op" data-op="/" onclick="answer('/','tap')">÷</button>
 </div>
 <button id="equationVoiceBtn" class="btn" style="display:none;margin-top:24px;min-width:210px;background:#d9363e;color:white" onclick="toggleEquationVoice()">🎤 Voice: OFF</button>
 <button id="skipBtn" class="btn secondary" style="margin-top:24px;min-width:150px" onclick="skipQuestion()">⏭ Skip</button>
@@ -96,18 +98,20 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 </div></section>
 
 <script>
+const VERSION=32;
 let mode='local',players=[],pi=0,score=0,questions=0,correct=0,wrong=0,settings={},current=null,endAt=0,timer=null,locked=false;
 let seed=1,peer=null,conns=[],hostConn=null,isHost=false,roomPlayers=[],onlineFinished={},onlineTotal=1;
 let tutorialPausedAt=0,recognition=null,wantListening=false,equationVoiceActive=false,equationVoiceTranscript='',equationVoiceCandidates=[];
+let botTimer=null,botDueAt=0,botPausedRemaining=0,botScoreValue=0,botCorrect=0,awaitingOperatorName=false,playerVoiceClaimed=false;
 function $(id){return document.getElementById(id)}
 function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')}
-function chooseMode(m){mode=m;show('setup');$('setupTitle').textContent=m==='local'?'📱 Local Game':'🌐 Online Game';$('localFields').classList.toggle('hidden',m!=='local');$('onlineFields').classList.toggle('hidden',m!=='online');$('startBtn').classList.toggle('hidden',m==='online');renderNames()}
+function chooseMode(m){mode=m;show('setup');$('setupTitle').textContent=m==='bot'?'🤖 Bot Game':m==='local'?'📱 Local Game':'🌐 Online Game';$('localFields').classList.toggle('hidden',m==='online');$('onlineFields').classList.toggle('hidden',m!=='online');$('startBtn').classList.toggle('hidden',m==='online');$('playerCountField').classList.toggle('hidden',m==='bot');$('botDifficultyField').classList.toggle('hidden',m!=='bot');renderNames()}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function renderNames(){let n=+$('playerCount').value,saved=[];try{saved=JSON.parse(localStorage.getItem('mathDetectivePlayerNames')||'[]')}catch(e){}let old=[...document.querySelectorAll('.pname')].map(x=>x.value);$('names').innerHTML=Array.from({length:n},(_,i)=>`<div class="field"><label>Player ${i+1}</label><input class="pname" value="${esc(old[i]||saved[i]||`Player ${i+1}`)}"></div>`).join('')}
+function renderNames(){let n=mode==='bot'?1:+$('playerCount').value,saved=[];try{saved=JSON.parse(localStorage.getItem('mathDetectivePlayerNames')||'[]')}catch(e){}let old=[...document.querySelectorAll('.pname')].map(x=>x.value);$('names').innerHTML=Array.from({length:n},(_,i)=>`<div class="field"><label>${mode==='bot'?'Your Name':`Player ${i+1}`}</label><input class="pname" value="${esc(old[i]||saved[i]||`Player ${i+1}`)}"></div>`).join('')}
 $('playerCount').onchange=renderNames;
-function startConfiguredGame(){settings={gameMode:'race',difficulty:$('difficulty').value,duration:+$('duration').value};players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('mathDetectivePlayerNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}pi=0;seed=(Date.now()>>>0);settings.baseSeed=seed;showTransition()}
+function startConfiguredGame(){settings={gameMode:'race',difficulty:$('difficulty').value,duration:+$('duration').value,botDifficulty:mode==='bot'?$('botDifficulty').value:null};players=[...document.querySelectorAll('.pname')].map((x,i)=>({name:x.value.trim()||`Player ${i+1}`}));try{localStorage.setItem('mathDetectivePlayerNames',JSON.stringify(players.map(x=>x.name)))}catch(e){}pi=0;seed=(Date.now()>>>0);settings.baseSeed=seed;showTransition()}
 function showTransition(){$('turnTitle').textContent=`${players[pi].name}, get ready!`;show('transition')}
-function beginPlayer(){score=questions=correct=wrong=0;seed=mode==='local'?(((settings.baseSeed??seed)+(pi*2654435761))>>>0):(settings.baseSeed??seed);$('who').textContent=players[pi].name;$('score').textContent=0;show('game');endAt=performance.now()+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);configureGameModeUI();newQuestion();startListening()}
+function beginPlayer(){score=questions=correct=wrong=botScoreValue=botCorrect=0;awaitingOperatorName=false;seed=mode==='local'?(((settings.baseSeed??seed)+(pi*2654435761))>>>0):(settings.baseSeed??seed);$('who').textContent=players[pi].name;$('score').textContent=0;$('botScore').textContent=0;$('botScorePill').classList.toggle('hidden',mode!=='bot');show('game');endAt=performance.now()+settings.duration*1000;clearInterval(timer);timer=setInterval(tick,100);configureGameModeUI();newQuestion();startListening()}
 function tick(){let left=Math.max(0,Math.ceil((endAt-performance.now())/1000));$('time').textContent=left;if(performance.now()>=endAt)finishPlayer()}
 function rng(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 function ri(a,b){return Math.floor(rng()*(b-a+1))+a}
@@ -282,11 +286,17 @@ function speakPracticeAnswer(ok,q,done){
  verdict.onerror=()=>setTimeout(()=>done&&done(),500);
  speechSynthesis.speak(verdict);
 }
-function newQuestion(){if(performance.now()>=endAt)return finishPlayer();locked=false;current=generate();questions++;equationVoiceTranscript='';equationVoiceCandidates=[];setEquationVoice(false);$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active')){showListening();startListening()}}),120)}
-function answer(op){if(locked||!current||performance.now()>=endAt)return;locked=true;const ok=op===current.op,q=current;if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`}$('score').textContent=score;if(settings.gameMode==='practice'){speakPracticeAnswer(ok,q,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()})}else{speak(ok?'Correct':'Wrong');setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}}
+function botDelay(){let ranges={easy:[4800,6800],medium:[2600,4100],hard:[1250,1950]},r=ranges[settings.botDifficulty||'medium'];return Math.round(r[0]+Math.random()*(r[1]-r[0]))}
+function cancelBot(){clearTimeout(botTimer);botTimer=null;botDueAt=0}
+function scheduleBot(delay=botDelay()){if(mode!=='bot'||locked||!current||performance.now()>=endAt)return;cancelBot();botDueAt=performance.now()+delay;botTimer=setTimeout(botAnswer,delay)}
+function botAnswer(){botTimer=null;botDueAt=0;if(mode!=='bot'||locked||!current||performance.now()>=endAt)return;locked=true;stopListening();let b=document.querySelector(`.op[data-op="${current.op}"]`);if(b)b.style.outline='7px solid #111';botScoreValue++;botCorrect++;$('botScore').textContent=botScoreValue;$('feedback').className='feedback good';$('feedback').textContent=`🤖 Bot selected ${spokenOp(current.op)} first. +1`;setTimeout(()=>{if(b)b.style.outline='';if(performance.now()<endAt)newQuestion();else finishPlayer()},900)}
+function newQuestion(){cancelBot();if(performance.now()>=endAt)return finishPlayer();locked=false;awaitingOperatorName=false;playerVoiceClaimed=false;current=generate();questions++;equationVoiceTranscript='';equationVoiceCandidates=[];setEquationVoice(false);$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(mode==='bot')scheduleBot();if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active')){showListening();startListening()}}),120)}
+function completePlayerAnswer(ok,q){if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`}$('score').textContent=score;awaitingOperatorName=false;if(settings.gameMode==='practice'){speakPracticeAnswer(ok,q,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()})}else{speak(ok?'Correct':'Wrong');setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}}
+function confirmOperatorName(op){if(!awaitingOperatorName||!current)return;completePlayerAnswer(op===current.op,current)}
+function answer(op,source='voice'){if(locked||!current||performance.now()>=endAt)return;cancelBot();locked=true;const ok=op===current.op,q=current;if(mode==='bot'&&ok&&source==='tap'){awaitingOperatorName=true;$('feedback').className='feedback good';$('feedback').textContent=`🎤 You selected first. Say “${spokenOp(current.op)}”.`;showListening();startListening();return}completePlayerAnswer(ok,q)}
 function skipQuestion(){
  if(locked||!current||performance.now()>=endAt)return;
- locked=true;$('feedback').className='feedback';$('feedback').textContent='Skipped — no points lost';
+ cancelBot();locked=true;$('feedback').className='feedback';$('feedback').textContent='Skipped — no points lost';
  if(settings.gameMode==='practice')practiceSpeak('Skipped.',()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()});
  else setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},350)
 }
@@ -294,17 +304,17 @@ function symbol(op){return op==='*'?'×':op==='/'?'÷':op}
 function speak(t){if(!('speechSynthesis'in window))return;let was=wantListening;stopListening();let u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.9;u.onend=()=>{if(was&&$('game').classList.contains('active'))startListening()};speechSynthesis.cancel();speechSynthesis.speak(u)}
 const voiceMap={'+':['plus','add','addition','added'],'-':['minus','subtract','subtraction','take away'],'*':['times','multiply','multiplied','multiplication','cross'],'/':['divide','divided','division','over']};
 function detectVoice(t){t=t.toLowerCase().replace(/[^a-z ]/g,' ');for(const [op,words] of Object.entries(voiceMap))if(words.some(w=>t.includes(w)))return op;return null}
-function startListening(){wantListening=true;if(recognition)return;let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;let r=new SR();recognition=r;r.lang='en-US';r.continuous=false;r.interimResults=false;r.maxAlternatives=5;r.onresult=e=>{let heard=[...e.results[0]].map(x=>x.transcript);recognition=null;let op=heard.map(detectVoice).find(Boolean);if(op){$('feedback').textContent='';answer(op)}else if(!locked&&$('game').classList.contains('active')){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.';if(wantListening)setTimeout(()=>{showListening();startListening()},220)}else if(wantListening&&!locked)setTimeout(()=>{showListening();startListening()},180)};r.onerror=e=>{if(!locked&&$('game').classList.contains('active')&&e.error!=='aborted'){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.'}};r.onend=()=>{if(recognition===r)recognition=null;if(wantListening&&!locked&&$('game').classList.contains('active'))setTimeout(startListening,220)};try{r.start()}catch(e){recognition=null}}
+function startListening(){wantListening=true;if(recognition)return;let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;let r=new SR();recognition=r;r.lang='en-US';r.continuous=false;r.interimResults=false;r.maxAlternatives=5;r.onspeechstart=()=>{if(mode==='bot'&&!locked&&!awaitingOperatorName){playerVoiceClaimed=true;locked=true;cancelBot()}};r.onresult=e=>{let heard=[...e.results[0]].map(x=>x.transcript);recognition=null;let op=heard.map(detectVoice).find(Boolean);if(op){$('feedback').textContent='';if(awaitingOperatorName)confirmOperatorName(op);else{if(playerVoiceClaimed)locked=false;answer(op,'voice')}}else if((!locked||awaitingOperatorName||playerVoiceClaimed)&&$('game').classList.contains('active')){if(playerVoiceClaimed&&!awaitingOperatorName){playerVoiceClaimed=false;locked=false;scheduleBot()}$('feedback').className='feedback bad';$('feedback').textContent=awaitingOperatorName?`Say “${spokenOp(current.op)}” again.`:'Say it again.';if(wantListening)setTimeout(()=>{showListening();startListening()},220)}else if(wantListening&&(!locked||awaitingOperatorName))setTimeout(()=>{showListening();startListening()},180)};r.onerror=e=>{if(playerVoiceClaimed&&!awaitingOperatorName){playerVoiceClaimed=false;locked=false;scheduleBot()}if((!locked||awaitingOperatorName)&&$('game').classList.contains('active')&&e.error!=='aborted'){$('feedback').className='feedback bad';$('feedback').textContent='Say it again.'}};r.onend=()=>{if(recognition===r)recognition=null;if(wantListening&&(!locked||awaitingOperatorName)&&$('game').classList.contains('active'))setTimeout(startListening,220)};try{r.start()}catch(e){recognition=null}}
 function stopListening(){wantListening=false;if(recognition){try{recognition.abort()}catch(e){}recognition=null}}
-function openTutorial(){tutorialPausedAt=performance.now();clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();tutorialPage(1);show('tutorial');setTimeout(playTutorialOperator,350)}
+function openTutorial(){tutorialPausedAt=performance.now();botPausedRemaining=botDueAt?Math.max(0,botDueAt-performance.now()):0;cancelBot();clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();tutorialPage(1);show('tutorial');setTimeout(playTutorialOperator,350)}
 function tutorialPage(n){speechSynthesis.cancel();$('tut1').classList.toggle('hidden',n!==1);$('tut2').classList.toggle('hidden',n!==2);if(n===1)setTimeout(playTutorialOperator,250);if(n===2)setTimeout(()=>speakOperationSet('plus'),300)}
 function tutorialSay(text,done){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.82;u.onend=()=>done&&done();u.onerror=()=>done&&done();speechSynthesis.speak(u)}
 function playTutorialOperator(){tutorialSay('Minus')}
 function speakOperationSet(which){let texts={plus:'Plus. Add. Addition. Added.',minus:'Minus. Subtract. Subtraction. Take away.',multiply:'Times. Multiply. Multiplied. Multiplication.',divide:'Divide. Divided by. Division. Over.'};tutorialSay(texts[which])}
 function playAllOperations(){tutorialSay('Plus. Add. Addition. Added. Minus. Subtract. Subtraction. Take away. Times. Multiply. Multiplied. Multiplication. Divide. Divided by. Division. Over.')}
-function closeTutorial(){let paused=performance.now()-tutorialPausedAt;endAt+=paused;show('game');timer=setInterval(tick,100);configureGameModeUI();startListening()}
+function closeTutorial(){let paused=performance.now()-tutorialPausedAt;endAt+=paused;show('game');timer=setInterval(tick,100);configureGameModeUI();if(mode==='bot'&&!locked&&current)scheduleBot(botPausedRemaining||botDelay());startListening()}
 function restartSame(){
- clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();
+ cancelBot();clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();
  // A restart is a fresh game: use a new seed so the mathematics sequence changes.
  seed=(Date.now()>>>0);
  settings.baseSeed=seed;
@@ -314,7 +324,7 @@ function restartSame(){
  }
  beginPlayer()
 }
-function finishPlayer(){if(!timer)return;clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();let res={name:players[pi].name,score,questions,correct,wrong};players[pi]={...players[pi],...res};if(mode==='online'){sendFinish(res);return}pi++;if(pi<players.length)showTransition();else showResults()}
+function finishPlayer(){if(!timer)return;cancelBot();clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();let res={name:players[pi].name,score,questions,correct,wrong};players[pi]={...players[pi],...res};if(mode==='online'){sendFinish(res);return}if(mode==='bot'){showResults([players[pi],{name:`Bot (${settings.botDifficulty[0].toUpperCase()+settings.botDifficulty.slice(1)})`,score:botScoreValue,questions,correct:botCorrect,wrong:0}]);return}pi++;if(pi<players.length)showTransition();else showResults()}
 function ordinal(n){
  const words=['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth','Ninth','Tenth'];
  return words[n-1]||`${n}th`
@@ -340,7 +350,7 @@ function showResults(results){
  setTimeout(()=>announceWinner(w),450)
 }
 function playAgain(){pi=0;showTransition()}
-function returnHome(){clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();show('home')}
+function returnHome(){cancelBot();clearInterval(timer);timer=null;stopListening();speechSynthesis.cancel();awaitingOperatorName=false;$('botScorePill').classList.add('hidden');show('home')}
 
 function roomCodeNew(){return Math.random().toString(36).slice(2,8).toUpperCase()}
 function readOnlineSettings(){return {gameMode:'race',difficulty:$('difficulty').value,duration:+$('duration').value}}
@@ -410,5 +420,5 @@ function checkOnlineDone(){
 try{$('onlineName').value=localStorage.getItem('mathDetectiveOnlineName')||''}catch(e){}
 renderNames();
 </script>
-<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 31</div>
+<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 32</div>
 </body></html>
