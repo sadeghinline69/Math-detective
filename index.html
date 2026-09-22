@@ -33,7 +33,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 <button class="btn primary wide" onclick="chooseMode('bot')">🤖 Bot Game</button>
 <button class="btn primary wide" onclick="chooseMode('local')">📱 Local Game</button>
 <button class="btn primary wide" onclick="chooseMode('online')">🌐 Online Game</button>
-<p class="sub" style="margin-top:20px">Version 32 · Designed &amp; Created by Sadegh Mosleh · © 2026</p>
+<p class="sub" style="margin-top:20px">Version 33 · Designed &amp; Created by Sadegh Mosleh · © 2026</p>
 </div></section>
 
 <section id="setup" class="screen"><div class="panel">
@@ -98,7 +98,7 @@ h1{text-align:center;font-size:clamp(34px,9vw,56px);margin:8px 0;color:#2449bb}h
 </div></section>
 
 <script>
-const VERSION=32;
+const VERSION=33;
 let mode='local',players=[],pi=0,score=0,questions=0,correct=0,wrong=0,settings={},current=null,endAt=0,timer=null,locked=false;
 let seed=1,peer=null,conns=[],hostConn=null,isHost=false,roomPlayers=[],onlineFinished={},onlineTotal=1;
 let tutorialPausedAt=0,recognition=null,wantListening=false,equationVoiceActive=false,equationVoiceTranscript='',equationVoiceCandidates=[];
@@ -293,7 +293,7 @@ function botAnswer(){botTimer=null;botDueAt=0;if(mode!=='bot'||locked||!current|
 function newQuestion(){cancelBot();if(performance.now()>=endAt)return finishPlayer();locked=false;awaitingOperatorName=false;playerVoiceClaimed=false;current=generate();questions++;equationVoiceTranscript='';equationVoiceCandidates=[];setEquationVoice(false);$('feedback').textContent='';$('equation').textContent=`${fmt(current.a)} □ ${fmt(current.b)} = ${current.r}`;if(mode==='bot')scheduleBot();if(settings.gameMode==='practice')setTimeout(()=>practiceSpeak(pickPhrase(practicePrompts),()=>{if(!locked&&$('game').classList.contains('active')){showListening();startListening()}}),120)}
 function completePlayerAnswer(ok,q){if(ok){score++;correct++;$('feedback').className='feedback good';$('feedback').textContent='✓ Correct! +1'}else{score--;wrong++;$('feedback').className='feedback bad';$('feedback').textContent=`✕ Wrong! ${symbol(current.op)}  −1`}$('score').textContent=score;awaitingOperatorName=false;if(settings.gameMode==='practice'){speakPracticeAnswer(ok,q,()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()})}else{speak(ok?'Correct':'Wrong');setTimeout(()=>{if(performance.now()<endAt)newQuestion();else finishPlayer()},600)}}
 function confirmOperatorName(op){if(!awaitingOperatorName||!current)return;completePlayerAnswer(op===current.op,current)}
-function answer(op,source='voice'){if(locked||!current||performance.now()>=endAt)return;cancelBot();locked=true;const ok=op===current.op,q=current;if(mode==='bot'&&ok&&source==='tap'){awaitingOperatorName=true;$('feedback').className='feedback good';$('feedback').textContent=`🎤 You selected first. Say “${spokenOp(current.op)}”.`;showListening();startListening();return}completePlayerAnswer(ok,q)}
+function answer(op,source='voice'){if(locked||!current||performance.now()>=endAt)return;cancelBot();locked=true;completePlayerAnswer(op===current.op,current)}
 function skipQuestion(){
  if(locked||!current||performance.now()>=endAt)return;
  cancelBot();locked=true;$('feedback').className='feedback';$('feedback').textContent='Skipped — no points lost';
@@ -420,5 +420,5 @@ function checkOnlineDone(){
 try{$('onlineName').value=localStorage.getItem('mathDetectiveOnlineName')||''}catch(e){}
 renderNames();
 </script>
-<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 32</div>
+<div id="versionBadge" style="text-align:center;font-size:12px;opacity:.62;margin:8px 0">Version 33</div>
 </body></html>
